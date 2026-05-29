@@ -1,0 +1,49 @@
+Simplethreads Instructional Threads Package
+Copyright (c) Rick Cox 2002 All Rights Reserved
+Available under the GNU General Public License.
+See file COPYING.
+
+Platforms Supported
+ - i386
+ - PowerPC
+ 
+Tested on:
+ - Linux 2.4.21/RedHat 7.3/i386, P3, P4, and Dual P3
+ - Linux 2.4.21/Debian 3.0/i386, Dual Xeon
+ - Mac OS X 10.3.2, G4 and G5
+ - FreeBSD 4.9/i386, P4
+ - NetBSD 1.6.1/i386, P4 [user threads only]
+ - NetBSD 1.6/i386, P2 [user threads only]
+
+----------------------------------------------------------------------
+For Instructors:
+
+Use "make student-dist" to generate a distribution without the
+solutions.
+
+For part 1, consider having the students write a design and submit
+that before the code.
+
+Because students may need to update their Makefile.ins (for example,
+when adding new source files), they need access to a working version
+of automake. As of 1/17/2004, spinlock and coredump have automake-1.5,
+which is broken enough that we can't easily suport it. So the latest
+automake/autoconf has been installed in
+/cse451/projects/tools/bin. The autoreconf script in that directory
+has also been hacked to force the use of those tools.
+
+----------------------------------------------------------------------
+To build from CVS:
+
+Generating the configure script requires the following packages:
+  autoconf >= 2.57
+  automake >= 1.6
+  libtool >= 1.5
+
+On CSE grad workstatsions, run (the env variables are required):
+
+export AUTOCONF=autoconf-2.57 AUTOHEADER=autoheader-2.57
+export AUTOMAKE=automake-1.7 ACLOCAL=aclocal-1.7
+aclocal-1.7 && autoheader-2.57 && automake-1.7 -a && autoconf-2.57
+
+
