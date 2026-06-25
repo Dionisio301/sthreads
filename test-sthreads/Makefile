@@ -52,7 +52,6 @@ test-mutex: test-mutex.o
 supermercado: supermercado.o
 	$(CC) $(CFLAGS) ../sthread_lib/sthread_start.o -o supermercado supermercado.o $(LIBSTHREAD)
 
-
 .c.o:
 	$(COMPILE) -c -o $@ $<
 

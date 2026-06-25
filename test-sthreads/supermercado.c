@@ -24,8 +24,8 @@
 
 /* ── Estado partilhado de cada fila ─ */
 typedef struct {
-  int          fila_id;
-  int          num_clientes;
+  int  fila_id;
+  int  num_clientes;
   sthread_mon_t mon;           /* monitor que protege esta fila */
 } caixa_t;
 
@@ -144,6 +144,8 @@ int main(void) {
   /* Lança os clientes (prioridade dinâmica = 7) */
   for (i = 0; i < NUM_CLIENTES; i++)
     sthread_create_p(cliente, (void*)(long)i, 7);
+
+    sthread_nice(10); //penalizar o main ao maximo
 
   /* Thread principal faz dump periódico e aguarda */
   int rounds = 0;
