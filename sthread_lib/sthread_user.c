@@ -25,7 +25,7 @@
  * PCB – Process Control Block de cada thread
  * ========================================================= */
 struct _sthread {
-  sthread_ctx_t          *saved_ctx;
+  sthread_ctx_t          *saved_ctx; //guarda estado thread
   sthread_start_func_t    start_routine_ptr;
   void *args;
   long  wake_time;
@@ -155,7 +155,7 @@ void sthread_user_init(void) {
   tid_gen = 1;
 
   /* Thread principal */
-  struct _sthread *main_thread = malloc(sizeof(struct _sthread));
+  struct _sthread *main_thread = malloc(sizeof(struct _sthread)); //PCB thread principal
   main_thread->start_routine_ptr = NULL;
   main_thread->args = NULL;
   main_thread->saved_ctx = sthread_new_blank_ctx();
@@ -168,9 +168,10 @@ void sthread_user_init(void) {
   main_thread->quantum  = QUANTUM_BASE;
   main_thread->nice  = 0;
 
-  active_thr = main_thread;
+  active_thr = main_thread;//definir thread principal como activa
+  //arranque do relogio
   Clock = 1;
-  sthread_time_slices_init(sthread_user_dispatcher, CLOCK_TICK);
+  sthread_time_slices_init(sthread_user_dispatcher, CLOCK_TICK);//func q configura o relogio do sistema/ a cada 100 ms chama dispatcher
 }
 
 /* =========================================================
@@ -181,7 +182,7 @@ void sthread_user_init(void) {
 sthread_t sthread_user_create_p(sthread_start_func_t start_routine, void *arg, int priority) {
   if (priority < 0) priority = 0;
   if (priority > 14) priority = 14;
-
+//reservar memmoria para o PCB e inicializr campos
   struct _sthread *t = malloc(sizeof(struct _sthread));
   t->args = arg;
   t->start_routine_ptr = start_routine;
@@ -202,8 +203,8 @@ sthread_t sthread_user_create_p(sthread_start_func_t start_routine, void *arg, i
 }
 
 /* Versão pública (API original sem priority) — usa prioridade dinâmica média */
-sthread_t sthread_user_create(sthread_start_func_t start_routine, void *arg) {
-  return sthread_user_create_p(start_routine, arg, 7);
+threads_t sthread_user_create(sthread_start_func_t start_routine, void *arg) {
+  return sthread_user_create_p(start_routine, arg, 7);//para o pcb da thread criada
 }
 
 /* =========================================
@@ -284,18 +285,18 @@ void sthread_user_dispatcher(void) {
       t->quantum   = QUANTUM_BASE;   /* recomeça com quantum base */
       rq_inserir(active_rq, t);
     } else {
-      queue_insert(tmp, t);
+      queue_insert(tmp, t);//vai para fila temporaria
     }
   }
   delete_queue(sleep_thr_list);
-  sleep_thr_list = tmp;
+  sleep_thr_list = tmp;//so threads que nao devem acordar
 
   /* Decrementa quantum da thread activa */
   active_thr->quantum--;
-
+//verificar se quantum aunda nao esgotou
   if (active_thr->quantum > 0) {
     /* Verificar preempção: existe thread activa com prioridade superior? */
-    int melhor = rq_melhor_prio(active_rq);
+    int melhor = rq_melhor_prio(active_rq);//qul melhor prioridade disponivel?
     if (melhor != -1 && melhor < active_thr->priority) {
       /* Preempção: volta para activos sem recalcular (quantum ainda disponível) */
       struct _sthread *old = active_thr;
@@ -321,11 +322,11 @@ void sthread_user_dispatcher(void) {
 
 /* ===============================================
  * Yield ,  cedência voluntária do CPU
- * Comportamento: bloquear como se fosse E/S (passo 5 do enunciado)
- * → recalcula prioridade/quantum e vai para activos
+ * Comportamento: bloquear como se fosse E/S 
+ *  recalcula prioridade/quantum e vai para activos
  * ========================================================= */
 void sthread_user_yield(void) {
-  splx(HIGH);
+  splx(HIGH);//desliga as interrupções
 
   struct _sthread *old = active_thr;
 
@@ -336,7 +337,7 @@ void sthread_user_yield(void) {
   rq_inserir(active_rq, old);
 
   if (rq_vazia(active_rq)) {
-    /* Só havia esta thread — continua */
+    /* Só havia esta thread - continua */
     active_thr = rq_retirar(active_rq);
     if (active_thr == old) {
       splx(LOW);
@@ -488,12 +489,12 @@ struct _sthread_mutex {
 };
 
 sthread_mutex_t sthread_user_mutex_init(void) {
-  sthread_mutex_t lock = malloc(sizeof(struct _sthread_mutex));
+  sthread_mutex_t lock = malloc(sizeof(struct _sthread_mutex));//reserva memoria para o mutex
   if (!lock) { printf("Error in creating mutex\n"); return NULL; }
   lock->l     = 0;
   lock->thr   = NULL;
-  lock->queue = create_queue();
-  return lock;
+  lock->queue = create_queue();//fila de espera vazia
+  return lock; //devolve o mutex criado
 }
 
 void sthread_user_mutex_free(sthread_mutex_t lock) {
@@ -502,7 +503,7 @@ void sthread_user_mutex_free(sthread_mutex_t lock) {
 }
 
 void sthread_user_mutex_lock(sthread_mutex_t lock) {
-  while (atomic_test_and_set(&(lock->l))) {}
+  while (atomic_test_and_set(&(lock->l))) {}//verificar lock, se 0 muda a 1, se 1 fica em loop
 
   if (lock->thr == NULL) {
     lock->thr = active_thr;
@@ -510,29 +511,29 @@ void sthread_user_mutex_lock(sthread_mutex_t lock) {
   } else {
     /* Bloqueia: recalcula prioridade/quantum e vai para lista de bloqueados */
     recalcular(active_thr);
-    queue_insert(lock->queue, active_thr);
-    queue_insert(blocked_list, active_thr);
-    atomic_clear(&(lock->l));
+    queue_insert(lock->queue, active_thr);//fila de espera do mutex
+    queue_insert(blocked_list, active_thr);//para o dump
+    atomic_clear(&(lock->l));//liberar lock e baixo nivel, outras podem acessar
 
-    splx(HIGH);
+    splx(HIGH); //desligar interrupcoes
     struct _sthread *old = active_thr;
-    if (rq_vazia(active_rq)) trocar_runqueues();
-    active_thr = rq_retirar(active_rq);
-    sthread_switch(old->saved_ctx, active_thr->saved_ctx);
-    splx(LOW);
+    if (rq_vazia(active_rq)) trocar_runqueues();//se nao ha threads activas, trocar runqueue
+    active_thr = rq_retirar(active_rq);//tirar proxima thread
+    sthread_switch(old->saved_ctx, active_thr->saved_ctx);//troca fisica. a actual dorme
+    splx(LOW);//ligar
   }
 }
 
 void sthread_user_mutex_unlock(sthread_mutex_t lock) {
-  if (lock->thr != active_thr) {
+  if (lock->thr != active_thr) {//verificar se quem esta a fazr unlock dtm o mutex
     printf("unlock without lock!\n");
     return;
   }
 
-  while (atomic_test_and_set(&(lock->l))) {}
+  while (atomic_test_and_set(&(lock->l))) {}//adquirir o lock d baixo nivel para mudar mutex
 
-  if (queue_is_empty(lock->queue)) {
-    lock->thr = NULL;
+  if (queue_is_empty(lock->queue)) {//se nao tiver ninguem a espera
+    lock->thr = NULL;//mutex livre
   } else {
     struct _sthread *t = queue_remove(lock->queue);
 
@@ -593,7 +594,7 @@ void sthread_user_monitor_exit(sthread_mon_t mon) {
 }
 
 void sthread_user_monitor_wait(sthread_mon_t mon) {
-  if (mon->mutex->thr != active_thr) {
+  if (mon->mutex->thr != active_thr) {//verificar se a thread esta dentro do monitor
     printf("monitor wait called outside monitor\n");
     return;
   }
@@ -604,7 +605,7 @@ void sthread_user_monitor_wait(sthread_mon_t mon) {
   queue_insert(blocked_list, active_thr);
 
   /* Liberta o monitor */
-  sthread_user_mutex_unlock(mon->mutex);
+  sthread_user_mutex_unlock(mon->mutex);//libertar o monitor . Apos o wait o monitor deve ser liberto
 
   splx(HIGH);
   struct _sthread *old = active_thr;
