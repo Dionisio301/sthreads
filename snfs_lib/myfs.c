@@ -20,7 +20,7 @@
 
 
 #ifndef SERVER_SOCK
-#define SERVER_SOCK "/tmp/server.socket"
+#define SERVER_SOCK "/tmp/server.socket_1"
 #endif
 
 #define MAX_OPEN_FILES 10		// how many files can be open at the same time
@@ -372,11 +372,13 @@ int myparse(char* pathname) {
 	char *search = "/";
 	int i=0;
 
-	strcpy(line,pathname); 
+	strcpy(line,pathname); 
+
 	if(strlen(line) >= MAX_PATH_NAME_SIZE || (strlen(line) < 1) ) {
 	   //printf("[myparse] Wrong pathname size.\n"); 
 	   return -1; 
-	   }
+	   }
+
 	if (strchr(line, ' ') != NULL || strstr( (const char *) line, "//") != NULL || line[0] != '/' ) {
 	   //printf("[myparse] Malformed pathname.\n");
 	   return -1; 
@@ -387,7 +389,8 @@ int myparse(char* pathname) {
 	   //printf("[myparse] Malformed pathname.\n");
 	   return -1; 
 	   }
-	   	i=0;
+	   
+	i=0;
 	token = strtok(line, search);
 
 	while(token != NULL) {

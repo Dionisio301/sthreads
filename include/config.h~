@@ -92,8 +92,8 @@
 /* Define to run on PowerPC CPUs. */
 /* #undef STHREAD_CPU_POWERPC */
 
-/* Define if you want platform-native threads. */
-/* #undef USE_PTHREADS */
+/* Undefine if you want user threads. */
+//#undef USE_PTHREADS
 
 /* Version number of package */
 #define VERSION "1.20"

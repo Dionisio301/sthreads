@@ -2,7 +2,7 @@
 SUBDIRS = sthread_lib test-sthreads
 
 #
-# Dados sobre o grupo e turno frequentado 
+# Dados sobre o grupo e turno frequentado dio
 # CAMPUS = preencher com A ou T consoante Alameda ou Tagus
 # CURSO = indicar o curso do turno frequentado: LEIC ou LERC
 # GRUPO = indicar o numero do grupo

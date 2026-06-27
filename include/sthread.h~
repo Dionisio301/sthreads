@@ -36,14 +36,8 @@ void sthread_init();
 /* Create a new thread starting at the routine given, which will
  * be passed arg. The new thread does not necessarily execute immediatly
  * (as in, sthread_create shouldn't force a switch to the new thread).
- * Uses default dynamic priority (7).
  */
 sthread_t sthread_create(sthread_start_func_t start_routine, void *arg);
-
-/* Create a new thread with explicit priority (0=highest, 14=lowest).
- * Priorities 0-4 are static; 5-14 are dynamic.
- */
-sthread_t sthread_create_p(sthread_start_func_t start_routine, void *arg, int priority);
 
 /* Exit the calling thread with return value ret.
  * Note: In this version of simplethreads, there is no way
@@ -56,23 +50,15 @@ void      sthread_exit(void *ret);
  */
 void      sthread_yield(void);
 
+
 /* Suspends current thread for the time specified. The time is defined
  * in milliseconds (e.g. 1s -> time=1000). Returns 0 if successful.
  */
 int sthread_sleep(int time);
 
+
 int sthread_join(sthread_t thread, void **value_ptr);
-
-/* Modifies the nice value of the calling thread (0..10).
- * Returns the priority the thread will have in the next epoch
- * if it exhausts its quantum.
- */
-int sthread_nice(int nice);
-
-/* Prints the state of the active runqueue, expired runqueue,
- * and blocked list.
- */
-void sthread_dump(void);
+ 
 
 /**********************************************************************/
 /* Synchronization Primitives: Mutexs and Condition Variables         */
@@ -113,5 +99,8 @@ void sthread_monitor_wait(sthread_mon_t mon);
 
 /* Signal the monitor's waiters */
 void sthread_monitor_signal(sthread_mon_t mon);
+
+/* Signal the monitor's waiters */
+void sthread_monitor_signalall(sthread_mon_t mon);
 
 #endif /* STHREAD_H */
